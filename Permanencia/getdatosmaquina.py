@@ -33,6 +33,21 @@ def getfechas(table, cc):
     conexion1.close()
     return df
 
+#ACUMULAR POR INS, OUTS Y CUMIN-CUMOUT
+def acumular(tinicial,tfinal,df):
+    # Agrupar por 'hora' y sumar las columnas 'ins' y 'outs'
+    df_grouped = df.groupby(['fecha','hora'], as_index=False).agg({'ins': 'sum', 'outs': 'sum'})
+    filtro_horas = (df_grouped['hora'] >= tinicial) & (df_grouped['hora'] <= tfinal)
+    df_grouped = df_grouped[filtro_horas]
+    # Calcular los acumulados de 'ins' y 'outs'
+    df_grouped['ins_acumulados'] = df_grouped.groupby('fecha')['ins'].cumsum()
+    df_grouped['outs_acumulados'] = df_grouped.groupby('fecha')['outs'].cumsum()
+    df_grouped['cumin-cumout'] = df_grouped['ins_acumulados'] - df_grouped['outs_acumulados']
+    print(df_grouped)
+    df_grouped['timestamp'] = pd.to_datetime(df_grouped['fecha'] + ' ' + df_grouped['hora'], format='%d/%m/%Y %H:%M:%S')
+    
+    return df_grouped
+
 def insert_df(df,table_name):
     try:
         # Establish connection to the database
@@ -66,25 +81,10 @@ def insert_df(df,table_name):
     
     finally:
         # Close cursor and connection
-        # if cursor:
-        #     cursor.close()
+        if cursor:
+            cursor.close()
         if conexion1:
             conexion1.close()
-
-#ACUMULAR POR INS, OUTS Y CUMIN-CUMOUT
-def acumular(tinicial,tfinal,df):
-    # Agrupar por 'hora' y sumar las columnas 'ins' y 'outs'
-    df_grouped = df.groupby(['fecha','hora'], as_index=False).agg({'ins': 'sum', 'outs': 'sum'})
-    filtro_horas = (df_grouped['hora'] >= tinicial) & (df_grouped['hora'] <= tfinal)
-    df_grouped = df_grouped[filtro_horas]
-    # Calcular los acumulados de 'ins' y 'outs'
-    df_grouped['ins_acumulados'] = df_grouped.groupby('fecha')['ins'].cumsum()
-    df_grouped['outs_acumulados'] = df_grouped.groupby('fecha')['outs'].cumsum()
-    df_grouped['cumin-cumout'] = df_grouped['ins_acumulados'] - df_grouped['outs_acumulados']
-    print(df_grouped)
-    df_grouped['timestamp'] = pd.to_datetime(df_grouped['fecha'] + ' ' + df_grouped['hora'], format='%d/%m/%Y %H:%M:%S')
-    
-    return df_grouped
 
 def principal(table,cc,fechas,tinicial,tfinal):
     for i in range(0,len(fechas)):
@@ -93,10 +93,6 @@ def principal(table,cc,fechas,tinicial,tfinal):
         df_grouped1=acumular(tinicial,tfinal,df)
         df_grouped1['id_cc']=cc
         print(df_grouped1)
-        df_grouped1['timestamp'] = pd.to_datetime(df_grouped1['timestamp'])
-        # Sumar 30 días a la columna 'fecha'
-        df_grouped1['timestamp'] = df_grouped1['timestamp'] + pd.Timedelta(days=122) #122 
-        #Convertir la columna 'fecha' a tipo datetime
         df_grouped1['timestamp'] = pd.to_datetime(df_grouped1['timestamp'])
         print(df_grouped1)
         table_name2='insouts7'
