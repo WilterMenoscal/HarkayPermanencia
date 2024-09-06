@@ -86,33 +86,32 @@ def insert_df(df,table_name):
         if conexion1:
             conexion1.close()
 
-def principal(table,cc,fechas,tinicial,tfinal):
+def principal(table_read,table_write,cc,fechas,tinicial,tfinal):
     for i in range(0,len(fechas)):
         #OBTENER DATAFRAME SEGUN CC Y DIA
-        df=getdf(table,cc,fechas[i])
+        df=getdf(table_read,cc,fechas[i])
         df_grouped1=acumular(tinicial,tfinal,df)
         df_grouped1['id_cc']=cc
         print(df_grouped1)
         df_grouped1['timestamp'] = pd.to_datetime(df_grouped1['timestamp'])
-        print(df_grouped1)
-        table_name2='insouts7'
-        insert_df(df_grouped1,table_name2)
+        insert_df(df_grouped1,table_write)
 
 
 start_time = time.time()
-table='ingreso_persona_local2'
+table_read='ingreso_persona_local2'
+table_write='insouts7'
 cc=[3]
 tinicial='09:00:00'
 tfinal='22:00:00'
 # Convertir las cadenas de tiempo a objetos datetime
 for i in cc:
-    fechas = getfechas(table, i)
+    fechas = getfechas(table_read, i)
     lista_fechas = []
     for fecha in fechas['fecha']:
         lista_fechas.append(fecha)  
     # Usar en caso de querer una o algunas fechas en especifico
     # lista_fechas=['02/01/2024','03/01/2024','04/01/2024','05/01/2024']
-    principal(table,i,lista_fechas,tinicial,tfinal)
+    principal(table_read,table_write,i,lista_fechas,tinicial,tfinal)
 
 end_time = time.time()
 execution_time = end_time - start_time

@@ -303,7 +303,7 @@ def graficoduracionpromedio(acumulados_df):
     )
     fig.show()
 
-def df_procesado(grupo,ddf3):
+def df_procesado(grupo,df3):
     grupo['hora'] = grupo['fecha'].dt.strftime('%Y-%m-%d %H:00:00')
     grupo =grupo.groupby('hora').agg({
         'ins': 'sum',  # Sumar las duraciones
@@ -358,10 +358,13 @@ def df_procesado(grupo,ddf3):
     return groupedfinal
 
 cc_id=[3]
+table_read='insouts7'
+table_write_IO='insouts8'
+table_write_perm='freq_datos4'
 n_days=0
 for i in cc_id:
     cc=i
-    df2=getdf('insouts7',cc)
+    df2=getdf(table_read,cc)
     df2['id_cc']=cc
     df2['fecha'] = pd.to_datetime(df2['fecha'])
     df2['fecha_dia'] = df2['fecha'].dt.date
@@ -383,7 +386,7 @@ for i in cc_id:
         
         #Corregir ingresos y guardarlos
         grupo=correccion(grupo)
-        insert_df(grupo,'insouts8')
+        insert_df(grupo,table_write_IO)
         
         #Separar en ins y outs
         entradas,salidas=insouts(grupo)
@@ -394,5 +397,5 @@ for i in cc_id:
 
         #Proceso final de datos y guardado
         groupedfinal=df_procesado(grupo,df3)
-        insert_df2(groupedfinal,'freq_datos4')
+        insert_df2(groupedfinal,table_write_perm)
         #graficoduracionpromedio(acumulados_df)
